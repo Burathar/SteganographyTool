@@ -38,6 +38,11 @@ namespace SteganographyTool
             }
         }
 
+        public static void SaveImage(Bitmap image, string saveImagePath)
+        {
+            image.Save(saveImagePath);
+        }
+
         public static byte[] LoadData(string dataFilePath)
         {
             string text = File.ReadAllText(dataFilePath);

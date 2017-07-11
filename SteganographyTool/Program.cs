@@ -156,7 +156,7 @@ namespace SteganographyTool
                     break;
 
                 case "T":
-                    steganographer.NewSteganograph(@"C:\Users\dedru\Desktop\image.png", @"C:\Users\dedru\Desktop\data.txt", @"C:\Users\dedru\Desktop\out.txt");
+                    steganographer.NewSteganograph(@"C:\Users\dedru\Desktop\image.png", @"C:\Users\dedru\Desktop\data.txt", @"C:\Users\dedru\Desktop\out.png");
                     break;
                     
                 default:
