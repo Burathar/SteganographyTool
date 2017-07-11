@@ -31,26 +31,7 @@ namespace SteganographyTool
             path = args.Where(s => s.Contains(@":\")).ToArray();
             args = args.Select(x => x.ToLower()).ToArray();
 
-            if (!File.Exists(path[0]))
-            {
-                Console.WriteLine($"{path[0]} is not a valid image file path.");
-                return;
-            }
-            if (!Directory.Exists(Path.GetDirectoryName(path[1])))
-            {
-                Console.WriteLine($"{Path.GetDirectoryName(path[0])} is not a valid directory path.");
-                return;
-            }
-            if (File.Exists(path[1]) && !args.Contains("-f"))
-            {
-                Console.WriteLine($"{Path.GetFileName(path[1])} already exists. If you want to overwrite this file use -f");
-            }
-            //check if given file extention is png or bmp
-            if (!File.Exists(path[2]))
-            {
-                Console.WriteLine($"{path[2]} is not a valid file path.");
-                return;
-            }
+            
 
             if (args.Contains("-h") || args.Contains("h") || args.Contains("help"))
             {
@@ -64,15 +45,55 @@ namespace SteganographyTool
             }
             if (args.Contains("-e"))
             {
+                if (!CheckPaths(path, args.Contains("-f"), 3))
+                    return;
                 steganographer.NewSteganograph(path[0], path[2], path[1]);
                 return;
             }
             if (args.Contains("-d"))
             {
+                if (!CheckPaths(path, args.Contains("-f"), 2))
+                    return;
                 steganographer.DecryptSteganograph(path[0], path[1]);
                 return;
             }
             Help();
+        }
+
+        private static bool CheckPaths(string[] path, bool forceOverwrite, int expectedPaths)
+        {
+            if(path.Length < expectedPaths)
+            {
+                Console.WriteLine("Too few file paths were passed");
+                return false;
+            }
+            if (!File.Exists(path[0]))
+            {
+                Console.WriteLine($"{path[0]} is not a valid image file path.");
+                return false ;
+            }
+            if (!Directory.Exists(Path.GetDirectoryName(path[1])))
+            {
+                Console.WriteLine($"{Path.GetDirectoryName(path[0])} is not a valid directory path.");
+                return false;
+            }
+            if (File.Exists(path[1]) && !forceOverwrite)
+            {
+                Console.WriteLine($"{Path.GetFileName(path[1])} already exists. If you want to overwrite this file use -f");
+                return false;
+            }
+            if (Path.GetExtension(path[1]) != ".png" && Path.GetExtension(path[1]) != ".bmp")
+            {
+                Console.WriteLine($"You must choose either .png or .bmp as save format instead of {Path.GetExtension(path[1])} for your savefile");
+                return false;
+            }
+            if (expectedPaths == 2) return true;
+            if (!File.Exists(path[2]))
+            {
+                Console.WriteLine($"{path[2]} is not a valid file path.");
+                return false;
+            }
+            return true;
         }
 
         private static void Help()
@@ -134,6 +155,10 @@ namespace SteganographyTool
                     quit = true;
                     break;
 
+                case "T":
+                    steganographer.NewSteganograph(@"C:\Users\dedru\Desktop\image.png", @"C:\Users\dedru\Desktop\data.txt", @"C:\Users\dedru\Desktop\out.txt");
+                    break;
+                    
                 default:
                     break;
             }
@@ -162,7 +187,7 @@ namespace SteganographyTool
                 Console.WriteLine("The given directory does not exist.");
                 return false;
             }
-            if (!File.Exists(saveImage))
+            if (File.Exists(saveImage))
             {
                 Console.WriteLine("The given file already exists.");
                 return false;
