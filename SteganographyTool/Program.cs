@@ -47,7 +47,7 @@ namespace SteganographyTool
             {
                 if (!CheckPaths(path, args.Contains("-f"), 3))
                     return;
-                steganographer.NewSteganograph(path[0], path[2], path[1]);
+                steganographer.NewSteganograph(path[0], path[2], path[1], false);
                 return;
             }
             if (args.Contains("-d"))
@@ -156,7 +156,7 @@ namespace SteganographyTool
                     break;
 
                 case "T":
-                    steganographer.NewSteganograph(@"C:\Users\dedru\Desktop\image.png", @"C:\Users\dedru\Desktop\data.txt", @"C:\Users\dedru\Desktop\out.png");
+                    steganographer.NewSteganograph(@"C:\Users\dedru\Desktop\image.png", @"C:\Users\dedru\Desktop\data.txt", @"C:\Users\dedru\Desktop\out.png", false);
                     break;
                     
                 default:
@@ -192,7 +192,7 @@ namespace SteganographyTool
                 Console.WriteLine("The given file already exists.");
                 return false;
             }
-            steganographer.NewSteganograph(sourceImage, data, saveImage);
+            steganographer.NewSteganograph(sourceImage, data, saveImage, false);
             return true;
         }
 

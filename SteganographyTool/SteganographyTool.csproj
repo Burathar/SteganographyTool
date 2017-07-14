@@ -43,10 +43,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExcessiveDataException.cs" />
     <Compile Include="FileStream.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RemoveWhitespace.cs" />
+    <Compile Include="RGB.cs" />
     <Compile Include="Steganographer.cs" />
   </ItemGroup>
   <ItemGroup>
