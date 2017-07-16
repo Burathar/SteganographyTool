@@ -47,14 +47,14 @@ namespace SteganographyTool
             {
                 if (!CheckPaths(path, args.Contains("-f"), 3))
                     return;
-                steganographer.NewSteganograph(path[0], path[2], path[1]);
+                steganographer.NewSteganograph(path[0], path[2], path[1], args.Contains("-g"));
                 return;
             }
             if (args.Contains("-d"))
             {
                 if (!CheckPaths(path, args.Contains("-f"), 2))
                     return;
-                steganographer.DecryptSteganograph(path[0], path[1]);
+                steganographer.DecryptSteganograph(path[0], path[1], grayScale: args.Contains("-g"));
                 return;
             }
             Help();
@@ -103,8 +103,9 @@ namespace SteganographyTool
             Console.WriteLine("\t-h\t--help");
             Console.WriteLine("\t-e\t--enrypt, expects image, output path, and data path");
             Console.WriteLine("\t-d\t--decrypt, expects image, and output path");
-            Console.WriteLine("\t-i\t--info about steganography");
             Console.WriteLine("\t-f\t--force overwrite exsiting output file");
+            Console.WriteLine("\t-g\t--the image is a grayscale image(prevents colorartefacts). This reduces the datacapacity by 3 times.");
+            Console.WriteLine("\t-i\t--info about steganography");
         }
 
         private static void Welcome()

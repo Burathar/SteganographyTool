@@ -12,6 +12,7 @@ namespace SteganographyTool
 {
     public static class FileStream
     {
+
         public static Bitmap LoadImage(string sourceImagePath)
         {
             Image imgInput = Image.FromFile(sourceImagePath);
@@ -46,45 +47,31 @@ namespace SteganographyTool
         public static byte[] LoadData(string dataFilePath)
         {
             string text = File.ReadAllText(dataFilePath);
-
             UTF8Encoding utf8 = new UTF8Encoding(true, true);
-
-            // We need to dimension the array, since we'll populate it with 2 method calls.
-            Byte[] bytes = new Byte[utf8.GetByteCount(text) + utf8.GetPreamble().Length];
-            // Encode the string.
-            Array.Copy(utf8.GetPreamble(), bytes, utf8.GetPreamble().Length);
-            utf8.GetBytes(text, 0, text.Length, bytes, utf8.GetPreamble().Length);
+            Byte[] bytes = new Byte[1 + utf8.GetByteCount(text) + utf8.GetPreamble().Length + Steganographer.Terminator.Length];//first byte is used for storing the dataDensity in its first 3 bits.
+            Array.Copy(utf8.GetPreamble(), 0, bytes, 1, utf8.GetPreamble().Length);
+            utf8.GetBytes(text, 0, text.Length, bytes, utf8.GetPreamble().Length + 1);
+            TerminateData(bytes);
             return bytes;
-
-            //System.Text.Encoder utf8Encoder = Encoding.UTF8.GetEncoder();
-
-            //int byteCount = utf8Encoder.GetByteCount(chars, 0, chars.Length, true);
-            //byte[] bytes = new Byte[byteCount];
-            //int bytesEncodedCount = utf8Encoder.GetBytes(chars, 0, chars.Length, bytes, 0, true);
-            //return new BitArray(bytes);
         }
 
-        public static byte[] ToByteArray(this BitArray bits)
+        private static byte[] TerminateData(byte[] bytes)
         {
-            int numBytes = bits.Count / 8;
-            if (bits.Count % 8 != 0) numBytes++;
-
-            byte[] bytes = new byte[numBytes];
-            int byteIndex = 0, bitIndex = 0;
-
-            for (int i = 0; i < bits.Count; i++)
+            for (int i = 0; i < 100000; i++)//change occurences of the terminator in data.(timeout after 100000 occurrences)
             {
-                if (bits[i])
-                    bytes[byteIndex] |= (byte)(1 << (7 - bitIndex));
-
-                bitIndex++;
-                if (bitIndex == 8)
+                int? terminatorIndex = Steganographer.FindSequence(bytes, Steganographer.Terminator);
+                if (terminatorIndex != null)
                 {
-                    bitIndex = 0;
-                    byteIndex++;
+                    bytes[(int)terminatorIndex] = 0xba;
                 }
+                else break;
             }
-
+            //Array.Resize(ref bytes, bytes.Length + Terminator.Length); //add terminator at the end of data
+            int terminatorI = 0;
+            for (int i = bytes.Length - Steganographer.Terminator.Length; i < bytes.Length; i++)
+            {
+                bytes[i] = Steganographer.Terminator[terminatorI++];
+            }
             return bytes;
         }
     }
