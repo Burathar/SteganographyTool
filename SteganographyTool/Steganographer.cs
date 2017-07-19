@@ -10,7 +10,7 @@ namespace SteganographyTool
 {
     public class Steganographer
     {
-        public static byte[] Terminator = new byte[] { 0xaa, 0xaa, 0x0f, 0xab };
+        public static byte[] Terminator = new byte[] { 0x23, 0x23, 0x0f, 0x3f };//{ 0xaa, 0xaa, 0x0f, 0xab };
 
         public void NewSteganograph(string sourceImagePath, string dataFilePath, string saveImagePath, bool grayScale = false)
         {
@@ -18,26 +18,39 @@ namespace SteganographyTool
             Console.WriteLine("Loaded source image");
             byte[] data = FileStream.LoadData(dataFilePath);
             Console.WriteLine("Loaded data file");
-            if ((((data.Length - 1) * 8) + 3 > sourceImage.Width * sourceImage.Height * 3 * 8 && !grayScale) || (((data.Length - 1) * 8) + 3 > sourceImage.Width * sourceImage.Height * 8 && grayScale))
-            {
-                Console.WriteLine($"The image is not big enough to contain the encryption data. The image would have to be {(grayScale ? (((data.Length - 1) * 8) + 3 / (double)sourceImage.Width * sourceImage.Height * 3 * 8) : ((data.Length - 1) * 8) + 3 / (double)sourceImage.Width * sourceImage.Height * 8)} times bigger");
-                if (((data.Length - 1) * 8) + 3 < sourceImage.Width * sourceImage.Height * 3 * 8) Console.WriteLine("The image would be big enough if not passed as grayscale image");
-                return;
-            }
+            if (!CheckDataLength(data, sourceImage, grayScale)) return;
+            //WriteDataToFileTEST(sourceImage, data, sourceImage.Height * sourceImage.Width);
             MutateBits(sourceImage, data, sourceImage.Height * sourceImage.Width, grayScale);
             Console.WriteLine("Encrypted data into the image");
             FileStream.SaveImage(sourceImage, saveImagePath);
             Console.WriteLine($"Mutated image saved to {saveImagePath}");
+        }
 
-            byte[] bytes;
-            bytes = ReadImage(sourceImage, grayScale);
-            Console.WriteLine("Extracted data from image");
-            byte[] data2 = RemoveTerminator(bytes);
+        private void WriteDataToFileTEST(Bitmap sourceImage, byte[] data, int pixelAmount)
+        {
+            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / pixelAmount);
+            data[0] = (byte)(0x2a); //only first 3 bits are read;
+            int dataCounter = 0;
+            MutateDataDensityBits(data, sourceImage, ref dataCounter, false);
+            FileStream.SaveData(data, @"C:\Users\dedru\Desktop\dataTestOut.txt");
+        }
+
+        private bool CheckDataLength(byte[] data, Bitmap sourceImage, bool grayScale)
+        {
+            if ((((data.Length - 1) * 8) + 3 > sourceImage.Width * sourceImage.Height * 3 * 8 && !grayScale) || (((data.Length - 1) * 8) + 3 > sourceImage.Width * sourceImage.Height * 8 && grayScale))
+            {
+                Console.WriteLine($"The image is not big enough to contain the encryption data. The image would have to be {(grayScale ? (((data.Length - 1) * 8) + 3 / (double)sourceImage.Width * sourceImage.Height * 3 * 8) : ((data.Length - 1) * 8) + 3 / (double)sourceImage.Width * sourceImage.Height * 8)} times bigger");
+                if (((data.Length - 1) * 8) + 3 < sourceImage.Width * sourceImage.Height * 3 * 8) Console.WriteLine("The image would be big enough if not passed as grayscale image");
+                return false;
+            }
+            return true;
         }
 
         private void MutateBits(Bitmap sourceImage, byte[] data, int pixelAmount, bool grayScale)
         {
-            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / pixelAmount);
+            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / (grayScale? pixelAmount : pixelAmount * 3));
+            Console.WriteLine($"{dataDensity} bits were used per channel to store the data");
+            if (dataDensity > 4) Console.WriteLine("Warning: when using more than 4 bits per channel, the output image might suffer from major artifacting. Use a smaller data:image ratio to resolve this problem");
             data[0] = (byte)((dataDensity - 1) << 5); //only first 3 bits are read;
             int dataCounter = 0;
             MutateDataDensityBits(data, sourceImage, ref dataCounter, grayScale);
@@ -104,7 +117,7 @@ namespace SteganographyTool
 
         private bool GetBit(byte b, int bitIndex)
         {
-            return (b & (1 << bitIndex)) != 0;
+            return (b & (1 << 7 - bitIndex)) != 0;
         }
 
         public void DecryptSteganograph(string sourceImage, string saveData, bool grayScale = false)
@@ -114,7 +127,9 @@ namespace SteganographyTool
             byte[] bytes;
             bytes = ReadImage(source, grayScale);
             Console.WriteLine("Extracted data from image");
+            //bytes = FileStream.LoadDataRaw(sourceImage);
             byte[] data = RemoveTerminator(bytes);
+            if (data == null) { Console.WriteLine("No data terminator was found, cannot extract data"); return; }//Overwrite this?
             FileStream.SaveData(data, saveData);
             Console.WriteLine($"Extracted data saved to {saveData}");
         }
@@ -122,9 +137,9 @@ namespace SteganographyTool
         private byte[] RemoveTerminator(byte[] bytes)
         {
             int? terminatorIndex = FindSequence(bytes, Terminator);
-            if (terminatorIndex == null) return bytes;
+            if (terminatorIndex == null) return null;
             byte[] data = new byte[(int)terminatorIndex];
-            Array.Copy(bytes, data, (int)terminatorIndex - 1);
+            Array.Copy(bytes, data, (int)terminatorIndex);
             return data;
         }
 
@@ -139,8 +154,8 @@ namespace SteganographyTool
                 {
                     Color color = sourceImage.GetPixel(x, y);
                     if (ReadChannel(color.R, data, dataDensity, ref dataCounter, !grayScale)) return data;
-                    if (ReadChannel(color.R, data, dataDensity, ref dataCounter, !grayScale)) return data;
-                    if (ReadChannel(color.R, data, dataDensity, ref dataCounter, true)) return data;
+                    if (ReadChannel(color.G, data, dataDensity, ref dataCounter, !grayScale)) return data;
+                    if (ReadChannel(color.B, data, dataDensity, ref dataCounter, true)) return data;
                 }
             }
             return data;
@@ -162,9 +177,9 @@ namespace SteganographyTool
             for (int i = 0; i < dataDensity; i++)
             {
                 bool bit = (channel >> i & 1) == 1;
-                int dataIndex = (int)Math.Floor((double)dataCounter / 8);
+                int byteIndex = (int)Math.Floor(dataCounter / 8d);
                 int bitIndex = dataCounter % 8;
-                data[dataIndex] = (byte) (bit ? data[dataIndex] | (1 << bitIndex) : data[dataIndex] & (255 - (int)Math.Pow(2, bitIndex)));
+                data[byteIndex] = (byte) (bit ? data[byteIndex] | (1 << 7 - bitIndex) : data[byteIndex] & ~ (1 << 7 - bitIndex));//if the bit is false, nothing has to happen, becouse the byte is 00 by defoult
                 if (bitIndex == 0)
                     if (CheckForTerminator(data, dataCounter))
                         return true;
@@ -182,20 +197,20 @@ namespace SteganographyTool
                 for (int i = 0; i <= 3; i++)
                 {
                     Color c = sourceImage.GetPixel(i, 0);
-                    dataDensity = dataDensity | ((c.R & 1) << i) | ((c.G & 1) << i) | ((c.B & 1) << i);
+                    dataDensity = dataDensity | (c.R & 1) << i | (c.G & 1) << i | (c.B & 1) << i;
                 }
             }
             else
             {
                 Color c = sourceImage.GetPixel(0, 0);
-                dataDensity = dataDensity | (c.R & 1) | ((c.R & 1) << 1) | ((c.R & 1) << 2);
+                dataDensity = dataDensity | (c.R & 1) << 2 | (c.G & 1) << 1 | (c.B & 1);
             }
             return dataDensity + 1;
         }
 
         public static int? FindSequence(byte[] toSearch, byte[] toFind)
         {
-            for (int i = 0; i + toFind.Length < toSearch.Length; i++)
+            for (int i = 0; i + toFind.Length <= toSearch.Length; i++)
             {
                 bool allEqual = true;
                 for (int j = 0; j < toFind.Length; j++)

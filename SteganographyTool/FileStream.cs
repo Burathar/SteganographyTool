@@ -26,8 +26,9 @@ namespace SteganographyTool
             switch (extension)
             {
                 case ".txt":
-                    UTF8Encoding utf8 = new UTF8Encoding(true, true);
+                    UTF8Encoding utf8 = new UTF8Encoding(true, true);//was 8
                     string text = utf8.GetString(bytes, 0, bytes.Length);
+                    //File.WriteAllText(savePath, ByteArrayToString(bytes));
                     File.WriteAllText(savePath, text);
                     break;
                 case ".png":
@@ -39,6 +40,18 @@ namespace SteganographyTool
             }
         }
 
+        public static string ByteArrayToString(byte[] bytes)
+        {
+            StringBuilder hex = new StringBuilder(bytes.Length * 2);
+            foreach (byte b in bytes)
+            {
+                hex.AppendFormat("{0:x2}", b);
+                hex.Append(' ');
+            }
+                
+            return hex.ToString();
+        }
+
         public static void SaveImage(Bitmap image, string saveImagePath)
         {
             image.Save(saveImagePath);
@@ -48,10 +61,20 @@ namespace SteganographyTool
         {
             string text = File.ReadAllText(dataFilePath);
             UTF8Encoding utf8 = new UTF8Encoding(true, true);
+            Console.WriteLine("Is singleByte: " + utf8.IsSingleByte);
             Byte[] bytes = new Byte[1 + utf8.GetByteCount(text) + utf8.GetPreamble().Length + Steganographer.Terminator.Length];//first byte is used for storing the dataDensity in its first 3 bits.
             Array.Copy(utf8.GetPreamble(), 0, bytes, 1, utf8.GetPreamble().Length);
             utf8.GetBytes(text, 0, text.Length, bytes, utf8.GetPreamble().Length + 1);
             TerminateData(bytes);
+            return bytes;
+        }
+
+        public static byte[] LoadDataRaw(string dataFilePath)
+        {
+            string text = File.ReadAllText(dataFilePath);
+            UTF8Encoding utf8 = new UTF8Encoding(true, true);
+            Byte[] bytes = new Byte[utf8.GetByteCount(text)];
+            utf8.GetBytes(text, 0, text.Length, bytes, 0);
             return bytes;
         }
 
