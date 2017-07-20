@@ -33,21 +33,21 @@ namespace SteganographyTool
                 Help();
                 return;
             }
-            if (args.Contains("-i"))
+            if (args.Contains("-i") || args.Contains("i"))
             {
                 Info();
                 return;
             }
-            if (args.Contains("-e"))
+            if (args.Contains("-e") || args.Contains("e"))
             {
-                if (!CheckPaths(path, args.Contains("-f"), 3))
+                if (!CheckPaths(path, args.Contains("-f") || args.Contains("f"), 3))
                     return;
                 steganographer.NewSteganograph(path[0], path[2], path[1], args.Contains("-g"));
                 return;
             }
-            if (args.Contains("-d"))
+            if (args.Contains("-d") || args.Contains("d"))
             {
-                if (!CheckPaths(path, args.Contains("-f"), 2))
+                if (!CheckPaths(path, args.Contains("-f") || args.Contains("f"), 2))
                     return;
                 steganographer.DecryptSteganograph(path[0], path[1], grayScale: args.Contains("-g"));
                 return;
