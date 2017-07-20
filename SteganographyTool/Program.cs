@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -10,54 +11,57 @@ namespace SteganographyTool
 
         private static void Main(string[] args)
         {
+            string[] testArgs = { "d", @"F:\imageOut.png", @"F:\dataOut.txt", "-f" };
+            //string[] testArgs = { "e", @"F:\image.jpg", @"F:\imageOut.png", @"f:\data.txt", "-f", "r" };
+            args = testArgs;
             steganographer = new Steganographer();
-            if (args.Length == 0)
-            {
-                Welcome();
-                Loop();
-            }
-            else
-            {
-                ReadArgs(args);
-            }
+            ReadArgs(args);
+            //Console.WriteLine("SteganographyTool Copyright ©Marijn Kuypers under GNU General Public License v3.0");
+            Console.ReadLine();
         }
 
         private static void ReadArgs(string[] args)
         {
-            string[] path;
-            path = args.Where(s => s.Contains(@":\")).ToArray();
-            args = args.Select(x => x.ToLower()).ToArray();
+            List<string> path = new List<string>();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].Contains(@":\")) path.Add(args[i]);
+                if (args[i].Length == 2 && args[i][0] == '-')
+                    args[i] = args[i].Substring(1);
+                args[i].ToLower();
+            }
+            EncodingType encoding = (args.Contains("-ascii") || args.Contains("ascii") || args.Contains("a")) ? EncodingType.ASCII : EncodingType.UTF8;
 
-            if (args.Contains("-h") || args.Contains("h") || args.Contains("help"))
+            if (args.Contains("h") || args.Contains("help"))
             {
                 Help();
                 return;
             }
-            if (args.Contains("-i") || args.Contains("i"))
+            if (args.Contains("i"))
             {
                 Info();
                 return;
             }
-            if (args.Contains("-e") || args.Contains("e"))
+            if (args.Contains("e"))
             {
-                if (!CheckPaths(path, args.Contains("-f") || args.Contains("f"), 3))
+                if (!CheckPaths(path, args.Contains("f"), 3))
                     return;
-                steganographer.NewSteganograph(path[0], path[2], path[1], args.Contains("-g"));
+                steganographer.NewSteganograph(path[0], path[2], path[1], args.Contains("g"), args.Contains("r"), encoding);
                 return;
             }
-            if (args.Contains("-d") || args.Contains("d"))
+            if (args.Contains("d"))
             {
-                if (!CheckPaths(path, args.Contains("-f") || args.Contains("f"), 2))
+                if (!CheckPaths(path, args.Contains("f"), 2))
                     return;
-                steganographer.DecryptSteganograph(path[0], path[1], grayScale: args.Contains("-g"));
+                steganographer.DecryptSteganograph(path[0], path[1], args.Contains("g"), encoding);
                 return;
             }
             Help();
         }
 
-        private static bool CheckPaths(string[] path, bool forceOverwrite, int expectedPaths)
+        private static bool CheckPaths(List<string> path, bool forceOverwrite, int expectedPaths)
         {
-            if (path.Length < expectedPaths)
+            if (path.Count < expectedPaths)
             {
                 Console.WriteLine("Too few file paths were passed");
                 return false;
@@ -78,7 +82,7 @@ namespace SteganographyTool
                 return false;
             }
             if (expectedPaths == 2) return true;
-            if (Path.GetExtension(path[1]) != ".png" && Path.GetExtension(path[1]) != ".bmp")
+            if (false)//(Path.GetExtension(path[1]) != ".png" && Path.GetExtension(path[1]) != ".bmp")
             {
                 Console.WriteLine($"You must choose either .png or .bmp as save format instead of {Path.GetExtension(path[1])} for your savefile");
                 return false;
@@ -95,12 +99,14 @@ namespace SteganographyTool
         {
             Console.WriteLine("usage: SteganographyTool.exe [options] C:\\image_path C:\\output_path [C:\\data_path]");
             Console.WriteLine("\toptions:");
-            Console.WriteLine("\t-h\t--help");
-            Console.WriteLine("\t-e\t--enrypt, expects image, output path, and data path");
-            Console.WriteLine("\t-d\t--decrypt, expects image, and output path");
-            Console.WriteLine("\t-f\t--force overwrite exsiting output file");
+            Console.WriteLine("\t-h\t--help.");
+            Console.WriteLine("\t-e\t--enrypt, expects image, output path, and data path.");
+            Console.WriteLine("\t-d\t--decrypt, expects image, and output path.");
+            Console.WriteLine("\t-f\t--force overwrite exsiting output file.");
             Console.WriteLine("\t-g\t--the image is a grayscale image(prevents colorartefacts). This reduces the datacapacity by 3 times.");
-            Console.WriteLine("\t-i\t--info about steganography");
+            Console.WriteLine("\t-a\t--the datafile should be read/written with ASCII encoding. Otherwise UTF-8 is used.");
+            Console.WriteLine("\t-r\t--fill the writable bytes after the data with random noise. This can make the artifacting less obvious.");
+            Console.WriteLine("\t-i\t--info about steganography.");
         }
 
         private static void Info()
@@ -110,120 +116,6 @@ namespace SteganographyTool
             Console.WriteLine("The advantage of steganography over cryptography alone is that the intended secret message does not attract attention to itself as an object of scrutiny. Plainly visible encrypted messages—no matter how unbreakable—arouse interest, and may in themselves be incriminating in countries where encryption is illegal.[2] Thus, whereas cryptography is the practice of protecting the contents of a message alone, steganography is concerned with concealing the fact that a secret message is being sent, as well as concealing the contents of the message.");
             Console.WriteLine("Steganography includes the concealment of information within computer files. In digital steganography, electronic communications may include steganographic coding inside of a transport layer, such as a document file, image file, program or protocol. Media files are ideal for steganographic transmission because of their large size. For example, a sender might start with an innocuous image file and adjust the color of every 100th pixel to correspond to a letter in the alphabet, a change so subtle that someone not specifically looking for it is unlikely to notice it.");
             Console.ReadLine();
-        }
-
-        private static void Welcome()
-        {
-            Console.WriteLine("Copyright ©Marijn Kuypers under GNU General Public License v3.0");
-            Console.WriteLine();
-            Console.WriteLine("Welcome to this Steganography tool!");
-            Console.WriteLine();
-        }
-
-        private static void Loop()
-        {
-            bool quit = false;
-            while (!quit)
-            {
-                Menu();
-                ChooseFunction(Console.ReadLine());
-            }
-
-            void ChooseFunction(string input)
-            {
-                input = RemoveWhitespace.Clean(input);
-                Console.WriteLine();
-                input = input.ToUpper();
-                if (input.Length != 1)
-                {
-                    Console.WriteLine("Please enter a valid option (E/D/Q)");
-                    return;
-                }
-                switch (input)
-                {
-                    case "E":
-                        if (!Encrypt())
-                            return;
-                        break;
-
-                    case "D":
-                        if (!Decrypt())
-                            return;
-                        break;
-
-                    case "Q":
-                        quit = true;
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-
-            bool Encrypt()
-            {
-                Console.WriteLine("Please specify the source image path.");
-                string sourceImage = Console.ReadLine();
-                if (!File.Exists(sourceImage))
-                {
-                    Console.WriteLine("The given file does not exist.");
-                    return false;
-                }
-                Console.WriteLine("Please specify the data file path.");
-                string data = Console.ReadLine();
-                if (!File.Exists(data))
-                {
-                    Console.WriteLine("The given file does not exist.");
-                    return false;
-                }
-                Console.WriteLine("Please specify the save image path.");
-                string saveImage = Console.ReadLine();
-                if (!Directory.Exists(Path.GetDirectoryName(saveImage)))
-                {
-                    Console.WriteLine("The given directory does not exist.");
-                    return false;
-                }
-                if (File.Exists(saveImage))
-                {
-                    Console.WriteLine("The given file already exists.");
-                    return false;
-                }
-                steganographer.NewSteganograph(sourceImage, data, saveImage);
-                return true;
-            }
-
-            bool Decrypt()
-            {
-                Console.WriteLine("Please specify the source image path.");
-                string sourceImage = Console.ReadLine();
-                if (!File.Exists(sourceImage))
-                {
-                    Console.WriteLine("The given file does not exist.");
-                    return false;
-                }
-                Console.WriteLine("Please specify the save data path.");
-                string saveData = Console.ReadLine();
-                if (!Directory.Exists(Path.GetDirectoryName(saveData)))
-                {
-                    Console.WriteLine("The given directory does not exist.");
-                    return false;
-                }
-                if (File.Exists(saveData))
-                {
-                    Console.WriteLine("The given file already exists.");
-                    return false;
-                }
-                steganographer.DecryptSteganograph(sourceImage, saveData);
-                return true;
-            }
-
-            void Menu()
-            {
-                Console.WriteLine("To make encrypt new Steganograph,\tenter 'E'");
-                Console.WriteLine("To decrypt an exsiting steganograph,\tenter 'D'");
-                Console.WriteLine("For more info on steganographs,\t\tenter 'I'");
-                Console.WriteLine("To quit,\t\t\t\tenter 'Q'");
-            }
         }
     }
 }

@@ -5,29 +5,19 @@ namespace SteganographyTool
 {
     public class Steganographer
     {
-        public static byte[] Terminator = new byte[] { 0x23, 0x23, 0x0f, 0x3f };//{ 0xaa, 0xaa, 0x0f, 0xab };
+        public static byte[] Terminator = new byte[] { 0xaa, 0xaa, 0x0f, 0xab };
 
-        public void NewSteganograph(string sourceImagePath, string dataFilePath, string saveImagePath, bool grayScale = false)
+        public void NewSteganograph(string sourceImagePath, string dataFilePath, string saveImagePath, bool grayScale = false, bool fillRandom = true, EncodingType encoding = EncodingType.UTF8)
         {
             Bitmap sourceImage = FileStream.LoadImage(sourceImagePath);
             Console.WriteLine("Loaded source image");
-            byte[] data = FileStream.LoadData(dataFilePath);
+            byte[] data = FileStream.LoadData(dataFilePath, encoding);
             Console.WriteLine("Loaded data file");
             if (!CheckDataLength(data, sourceImage, grayScale)) return;
-            //WriteDataToFileTEST(sourceImage, data, sourceImage.Height * sourceImage.Width);
-            MutateBits(sourceImage, data, sourceImage.Height * sourceImage.Width, grayScale);
+            MutateBits(sourceImage, data, sourceImage.Height * sourceImage.Width, grayScale, fillRandom);
             Console.WriteLine("Encrypted data into the image");
             FileStream.SaveImage(sourceImage, saveImagePath);
             Console.WriteLine($"Mutated image saved to {saveImagePath}");
-        }
-
-        private void WriteDataToFileTEST(Bitmap sourceImage, byte[] data, int pixelAmount)
-        {
-            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / pixelAmount);
-            data[0] = (byte)(0x2a); //only first 3 bits are read;
-            int dataCounter = 0;
-            MutateDataDensityBits(data, sourceImage, ref dataCounter, false);
-            FileStream.SaveData(data, @"C:\Users\dedru\Desktop\dataTestOut.txt");
         }
 
         private bool CheckDataLength(byte[] data, Bitmap sourceImage, bool grayScale)
@@ -41,7 +31,7 @@ namespace SteganographyTool
             return true;
         }
 
-        private void MutateBits(Bitmap sourceImage, byte[] data, int pixelAmount, bool grayScale)
+        private void MutateBits(Bitmap sourceImage, byte[] data, int pixelAmount, bool grayScale, bool fillRandom)
         {
             int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / (grayScale ? pixelAmount : pixelAmount * 3));
             Console.WriteLine($"{dataDensity} bits were used per channel to store the data");
@@ -58,7 +48,38 @@ namespace SteganographyTool
                     rgb.G = MutateChannel(data, rgb.G, ref dataCounter, dataDensity, !grayScale);
                     rgb.B = MutateChannel(data, rgb.B, ref dataCounter, dataDensity, true);
                     sourceImage.SetPixel(x, y, rgb.Color);
-                    if (dataCounter >= data.Length * 8 - 5) return;
+                    if (dataCounter >= data.Length * 8)
+                    {
+                        if (fillRandom)
+                        {
+                            FillRandom(sourceImage, dataDensity, grayScale, x + 1, y);
+                            return;
+                        }
+                        else
+                            return;
+                    }
+                }
+            }
+        }
+
+        private void FillRandom(Bitmap sourceImage, int dataDensity, bool grayScale, int startX, int startY)
+        {
+            Random r = new Random();
+            byte[] data = new byte[3];
+            for (int y = startY; y < sourceImage.Size.Height; y++)
+            {
+                for (int x = (y == startY) ? startX : 0; x < sourceImage.Size.Width; x++)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        data[i] = (byte)r.Next(255);
+                    }
+                    int dataCounter = 0;
+                    RGB rgb = new RGB(sourceImage.GetPixel(x, y));
+                    rgb.R = MutateChannel(data, rgb.R, ref dataCounter, dataDensity, !grayScale);
+                    rgb.G = MutateChannel(data, rgb.G, ref dataCounter, dataDensity, !grayScale);
+                    rgb.B = MutateChannel(data, rgb.B, ref dataCounter, dataDensity, true);
+                    sourceImage.SetPixel(x, y, rgb.Color);
                 }
             }
         }
@@ -115,7 +136,7 @@ namespace SteganographyTool
             return (b & (1 << 7 - bitIndex)) != 0;
         }
 
-        public void DecryptSteganograph(string sourceImage, string saveData, bool grayScale = false)
+        public void DecryptSteganograph(string sourceImage, string saveData, bool grayScale = false, EncodingType encoding = EncodingType.UTF8)
         {
             Bitmap source = FileStream.LoadImage(sourceImage);
             Console.WriteLine("Loaded source image");
@@ -125,7 +146,7 @@ namespace SteganographyTool
             //bytes = FileStream.LoadDataRaw(sourceImage);
             byte[] data = RemoveTerminator(bytes);
             if (data == null) { Console.WriteLine("No data terminator was found, cannot extract data"); return; }//Overwrite this?
-            FileStream.SaveData(data, saveData);
+            FileStream.SaveData(data, saveData, encoding);
             Console.WriteLine($"Extracted data saved to {saveData}");
         }
 
