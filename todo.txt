@@ -1,4 +1,3 @@
 Todo:
-Grayvalue checken (met grijs én kleur)
 metadata veranderen
 

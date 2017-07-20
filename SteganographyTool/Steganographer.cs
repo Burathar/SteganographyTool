@@ -88,7 +88,7 @@ namespace SteganographyTool
         {
             if (grayScale)
             {
-                for (int i = 0; i <= 3; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     RGB rgb = new RGB(sourceImage.GetPixel(i, 0));
                     rgb.R = MutateChannel(data, rgb.R, ref dataCounter, 1, false);
@@ -210,7 +210,7 @@ namespace SteganographyTool
             int dataDensity = 0;
             if (grayScale)
             {
-                for (int i = 0; i <= 3; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     Color c = sourceImage.GetPixel(i, 0);
                     dataDensity = dataDensity | (c.R & 1) << i | (c.G & 1) << i | (c.B & 1) << i;
