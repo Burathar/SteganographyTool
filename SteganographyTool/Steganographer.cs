@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
-using System.Collections;
 
 namespace SteganographyTool
 {
@@ -48,7 +43,7 @@ namespace SteganographyTool
 
         private void MutateBits(Bitmap sourceImage, byte[] data, int pixelAmount, bool grayScale)
         {
-            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / (grayScale? pixelAmount : pixelAmount * 3));
+            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / (grayScale ? pixelAmount : pixelAmount * 3));
             Console.WriteLine($"{dataDensity} bits were used per channel to store the data");
             if (dataDensity > 4) Console.WriteLine("Warning: when using more than 4 bits per channel, the output image might suffer from major artifacting. Use a smaller data:image ratio to resolve this problem");
             data[0] = (byte)((dataDensity - 1) << 5); //only first 3 bits are read;
@@ -72,7 +67,7 @@ namespace SteganographyTool
         {
             if (grayScale)
             {
-                for(int i = 0; i <= 3; i++)
+                for (int i = 0; i <= 3; i++)
                 {
                     RGB rgb = new RGB(sourceImage.GetPixel(i, 0));
                     rgb.R = MutateChannel(data, rgb.R, ref dataCounter, 1, false);
@@ -95,7 +90,7 @@ namespace SteganographyTool
         private int MutateChannel(byte[] data, int channel, ref int dataCounter, int dataDensity, bool increaseDataCounter)
         {
             int startCounter = dataCounter;
-            for(int i = 0; i < dataDensity; i++)
+            for (int i = 0; i < dataDensity; i++)
             {
                 bool? bit = GetDataBit(data, dataCounter);
                 if (bit == null) return channel;
@@ -165,7 +160,7 @@ namespace SteganographyTool
         {
             if (dataCounter < Terminator.Length * 8) return false;
             byte[] newBytes = new byte[Terminator.Length];
-            Array.Copy(data, (int)Math.Floor((double)dataCounter/8), newBytes, 0, Terminator.Length);
+            Array.Copy(data, (int)Math.Floor((double)dataCounter / 8), newBytes, 0, Terminator.Length);
             if (newBytes.Equals(Terminator))
                 return true;
             return false;
@@ -179,7 +174,7 @@ namespace SteganographyTool
                 bool bit = (channel >> i & 1) == 1;
                 int byteIndex = (int)Math.Floor(dataCounter / 8d);
                 int bitIndex = dataCounter % 8;
-                data[byteIndex] = (byte) (bit ? data[byteIndex] | (1 << 7 - bitIndex) : data[byteIndex] & ~ (1 << 7 - bitIndex));//if the bit is false, nothing has to happen, becouse the byte is 00 by defoult
+                data[byteIndex] = (byte)(bit ? data[byteIndex] | (1 << 7 - bitIndex) : data[byteIndex] & ~(1 << 7 - bitIndex));//if the bit is false, nothing has to happen, becouse the byte is 00 by defoult
                 if (bitIndex == 0)
                     if (CheckForTerminator(data, dataCounter))
                         return true;

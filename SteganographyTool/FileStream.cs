@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SteganographyTool
 {
     public static class FileStream
     {
-
         public static Bitmap LoadImage(string sourceImagePath)
         {
             Image imgInput = Image.FromFile(sourceImagePath);
@@ -31,10 +26,13 @@ namespace SteganographyTool
                     //File.WriteAllText(savePath, ByteArrayToString(bytes));
                     File.WriteAllText(savePath, text);
                     break;
+
                 case ".png":
                     break;
+
                 case ".jpg":
                     break;
+
                 default:
                     throw new ArgumentException("Unsupported extention", savePath);
             }
@@ -48,7 +46,7 @@ namespace SteganographyTool
                 hex.AppendFormat("{0:x2}", b);
                 hex.Append(' ');
             }
-                
+
             return hex.ToString();
         }
 

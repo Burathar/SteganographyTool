@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SteganographyTool
 {
@@ -30,8 +27,6 @@ namespace SteganographyTool
             string[] path;
             path = args.Where(s => s.Contains(@":\")).ToArray();
             args = args.Select(x => x.ToLower()).ToArray();
-
-            
 
             if (args.Contains("-h") || args.Contains("h") || args.Contains("help"))
             {
@@ -62,7 +57,7 @@ namespace SteganographyTool
 
         private static bool CheckPaths(string[] path, bool forceOverwrite, int expectedPaths)
         {
-            if(path.Length < expectedPaths)
+            if (path.Length < expectedPaths)
             {
                 Console.WriteLine("Too few file paths were passed");
                 return false;
@@ -70,7 +65,7 @@ namespace SteganographyTool
             if (!File.Exists(path[0]))
             {
                 Console.WriteLine($"{path[0]} is not a valid image file path.");
-                return false ;
+                return false;
             }
             if (!Directory.Exists(Path.GetDirectoryName(path[1])))
             {
@@ -230,6 +225,5 @@ namespace SteganographyTool
                 Console.WriteLine("To quit,\t\t\t\tenter 'Q'");
             }
         }
-
     }
 }
