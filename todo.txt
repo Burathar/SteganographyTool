@@ -1,0 +1,6 @@
+Todo:
+Grayvalue checken (met grijs én kleur)
+andere filetypes checken
+e ipv -e laten werken
+metadata veranderen
+andere characters
