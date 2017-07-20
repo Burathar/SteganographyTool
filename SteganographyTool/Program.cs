@@ -11,9 +11,9 @@ namespace SteganographyTool
 
         private static void Main(string[] args)
         {
-            string[] testArgs = { "d", @"F:\imageOut.png", @"F:\dataOut.txt", "-f" };
+            //string[] testArgs = { "d", @"F:\imageOut.png", @"F:\dataOut.txt", "-f" };
             //string[] testArgs = { "e", @"F:\image.jpg", @"F:\imageOut.png", @"f:\data.txt", "-f", "r" };
-            args = testArgs;
+            //args = testArgs;
             steganographer = new Steganographer();
             ReadArgs(args);
             //Console.WriteLine("SteganographyTool Copyright ©Marijn Kuypers under GNU General Public License v3.0");
