@@ -7,14 +7,14 @@ namespace SteganographyTool
 {
     internal class Program
     {
-        private static Steganographer steganographer;
+        private static Steganographer _steganographer;
 
         private static void Main(string[] args)
         {
             //string[] testArgs = { "d", @"F:\imageOut.png", @"F:\dataOut.txt", "-f" };
             //string[] testArgs = { "e", @"F:\image.jpg", @"F:\imageOut.png", @"f:\data.txt", "-f", "r" };
             //args = testArgs;
-            steganographer = new Steganographer();
+            _steganographer = new Steganographer();
             ReadArgs(args);
             //Console.WriteLine("SteganographyTool Copyright ©Marijn Kuypers under GNU General Public License v3.0");
             Console.ReadLine();
@@ -23,14 +23,8 @@ namespace SteganographyTool
         private static void ReadArgs(string[] args)
         {
             List<string> path = new List<string>();
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i].Contains(@":\")) path.Add(args[i]);
-                if (args[i].Length == 2 && args[i][0] == '-')
-                    args[i] = args[i].Substring(1);
-                args[i].ToLower();
-            }
-            EncodingType encoding = (args.Contains("-ascii") || args.Contains("ascii") || args.Contains("a")) ? EncodingType.ASCII : EncodingType.UTF8;
+            PreHandleArguments(args, path);
+            EncodingType encoding = GetEncoding(args);
 
             if (args.Contains("h") || args.Contains("help"))
             {
@@ -46,17 +40,33 @@ namespace SteganographyTool
             {
                 if (!CheckPaths(path, args.Contains("f"), 3))
                     return;
-                steganographer.NewSteganograph(path[0], path[2], path[1], args.Contains("g"), args.Contains("r"), encoding);
+                _steganographer.NewSteganograph(path[0], path[2], path[1], args.Contains("g"), args.Contains("r"), encoding);
                 return;
             }
             if (args.Contains("d"))
             {
                 if (!CheckPaths(path, args.Contains("f"), 2))
                     return;
-                steganographer.DecryptSteganograph(path[0], path[1], args.Contains("g"), encoding);
+                _steganographer.DecryptSteganograph(path[0], path[1], args.Contains("g"), encoding);
                 return;
             }
             Help();
+        }
+
+        private static EncodingType GetEncoding(string[] args)
+        {
+            return args.Contains("-ascii") || args.Contains("ascii") || args.Contains("a") ? EncodingType.Ascii : EncodingType.Utf8;
+        }
+
+        private static void PreHandleArguments(string[] args, List<string> path)
+        {
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].Contains(@":\")) path.Add(args[i]);
+                if (args[i].Length == 2 && args[i][0] == '-')
+                    args[i] = args[i].Substring(1);
+                args[i] = args[i].ToLower();
+            }
         }
 
         private static bool CheckPaths(List<string> path, bool forceOverwrite, int expectedPaths)
@@ -82,11 +92,11 @@ namespace SteganographyTool
                 return false;
             }
             if (expectedPaths == 2) return true;
-            if (false)//(Path.GetExtension(path[1]) != ".png" && Path.GetExtension(path[1]) != ".bmp")
-            {
-                Console.WriteLine($"You must choose either .png or .bmp as save format instead of {Path.GetExtension(path[1])} for your savefile");
-                return false;
-            }
+            //if (Path.GetExtension(path[1]) != ".png" && Path.GetExtension(path[1]) != ".bmp")
+            //{
+            //    Console.WriteLine($"You must choose either .png or .bmp as save format instead of {Path.GetExtension(path[1])} for your savefile");
+            //    return false;
+            //}
             if (!File.Exists(path[2]))
             {
                 Console.WriteLine($"{path[2]} is not a valid file path.");

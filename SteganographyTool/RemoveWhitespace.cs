@@ -1,4 +1,6 @@
-﻿namespace SteganographyTool
+﻿using System;
+
+namespace SteganographyTool
 {
     public static class RemoveWhitespace
     {
@@ -7,15 +9,15 @@
             bool done = false;
             while (done == false) //verwijder begintekens
             {
-                if (input.IndexOf("\n") == 0)
+                if (input.IndexOf("\n", StringComparison.Ordinal) == 0)
                 {
                     input = input.Substring("\n".Length);
                 }
-                else if (input.IndexOf("\r\n") == 0)
+                else if (input.IndexOf("\r\n", StringComparison.Ordinal) == 0)
                 {
                     input = input.Substring("\r\n".Length);
                 }
-                else if (input.IndexOf(" ") == 0)
+                else if (input.IndexOf(" ", StringComparison.Ordinal) == 0)
                 {
                     input = input.Substring(" ".Length);
                 }
@@ -31,15 +33,15 @@
                 int length = input.Length;
                 if (length > 0)
                 {
-                    if (input.LastIndexOf("\r\n") == length - 2 && length > 1)
+                    if (input.LastIndexOf("\r\n", StringComparison.Ordinal) == length - 2 && length > 1)
                     {
                         input = input.Substring(0, length - "\r\n".Length);
                     }
-                    else if (input.LastIndexOf("\n") == length - 1)
+                    else if (input.LastIndexOf("\n", StringComparison.Ordinal) == length - 1)
                     {
                         input = input.Substring(0, length - "\n".Length);
                     }
-                    else if (input.LastIndexOf(" ") == length - 1)
+                    else if (input.LastIndexOf(" ", StringComparison.Ordinal) == length - 1)
                     {
                         input = input.Substring(0, length - " ".Length);
                     }

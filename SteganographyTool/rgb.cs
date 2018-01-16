@@ -2,7 +2,7 @@
 
 namespace SteganographyTool
 {
-    public class RGB
+    public class Rgb
     {
         public int R { get; set; }
         public int G { get; set; }
@@ -10,10 +10,7 @@ namespace SteganographyTool
 
         public Color Color
         {
-            get
-            {
-                return Color.FromArgb(R, G, B);
-            }
+            get => Color.FromArgb(R, G, B);
             set
             {
                 R = value.R;
@@ -22,14 +19,14 @@ namespace SteganographyTool
             }
         }
 
-        public RGB(int r, int g, int b)
+        public Rgb(int r, int g, int b)
         {
-            this.R = r;
-            this.G = g;
-            this.B = b;
+            R = r;
+            G = g;
+            B = b;
         }
 
-        public RGB(Color color)
+        public Rgb(Color color)
         {
             R = color.R;
             G = color.G;

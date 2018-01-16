@@ -25,11 +25,11 @@ namespace SteganographyTool
                     string text = utf8.GetString(bytes, 0, bytes.Length);
                     switch (encoding)
                     {
-                        case EncodingType.UTF8:
+                        case EncodingType.Utf8:
                             File.WriteAllText(savePath, text, Encoding.UTF8);
                             break;
 
-                        case EncodingType.ASCII:
+                        case EncodingType.Ascii:
                             File.WriteAllText(savePath, text, Encoding.ASCII);
                             break;
 
@@ -57,25 +57,36 @@ namespace SteganographyTool
 
         public static byte[] LoadData(string dataFilePath, EncodingType encoding)
         {
-            string text;
-            switch (encoding)
+            Byte[] bytes = null;
+            string extension = Path.GetExtension(dataFilePath);
+            switch (extension)
             {
-                case EncodingType.UTF8:
-                    text = File.ReadAllText(dataFilePath, Encoding.UTF8);
+                case ".txt":
+                    string text;
+                    switch (encoding)
+                    {
+                        case EncodingType.Utf8:
+                            text = File.ReadAllText(dataFilePath, Encoding.UTF8);
+                            break;
+
+                        case EncodingType.Ascii:
+                            text = File.ReadAllText(dataFilePath, Encoding.ASCII);
+                            break;
+
+                        default:
+                            text = File.ReadAllText(dataFilePath);
+                            break;
+                    }
+                    UTF8Encoding utf8 = new UTF8Encoding(true, true);
+                    bytes = new Byte[1 + utf8.GetByteCount(text) + utf8.GetPreamble().Length + Steganographer.Terminator.Length];//first byte is used for storing the dataDensity in its first 3 bits.
+                    Array.Copy(utf8.GetPreamble(), 0, bytes, 1, utf8.GetPreamble().Length);
+                    utf8.GetBytes(text, 0, text.Length, bytes, utf8.GetPreamble().Length + 1);
                     break;
 
-                case EncodingType.ASCII:
-                    text = File.ReadAllText(dataFilePath, Encoding.ASCII);
-                    break;
-
-                default:
-                    text = File.ReadAllText(dataFilePath);
+                case ".png":
                     break;
             }
-            UTF8Encoding utf8 = new UTF8Encoding(true, true);
-            Byte[] bytes = new Byte[1 + utf8.GetByteCount(text) + utf8.GetPreamble().Length + Steganographer.Terminator.Length];//first byte is used for storing the dataDensity in its first 3 bits.
-            Array.Copy(utf8.GetPreamble(), 0, bytes, 1, utf8.GetPreamble().Length);
-            utf8.GetBytes(text, 0, text.Length, bytes, utf8.GetPreamble().Length + 1);
+
             TerminateData(bytes);
             return bytes;
         }

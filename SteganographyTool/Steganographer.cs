@@ -7,7 +7,7 @@ namespace SteganographyTool
     {
         public static byte[] Terminator = new byte[] { 0xaa, 0xaa, 0x0f, 0xab };
 
-        public void NewSteganograph(string sourceImagePath, string dataFilePath, string saveImagePath, bool grayScale = false, bool fillRandom = true, EncodingType encoding = EncodingType.UTF8)
+        public void NewSteganograph(string sourceImagePath, string dataFilePath, string saveImagePath, bool grayScale = false, bool fillRandom = true, EncodingType encoding = EncodingType.Utf8)
         {
             Bitmap sourceImage = FileStream.LoadImage(sourceImagePath);
             Console.WriteLine("Loaded source image");
@@ -22,18 +22,16 @@ namespace SteganographyTool
 
         private bool CheckDataLength(byte[] data, Bitmap sourceImage, bool grayScale)
         {
-            if ((((data.Length - 1) * 8) + 3 > sourceImage.Width * sourceImage.Height * 3 * 8 && !grayScale) || (((data.Length - 1) * 8) + 3 > sourceImage.Width * sourceImage.Height * 8 && grayScale))
-            {
-                Console.WriteLine($"The image is not big enough to contain the encryption data. The image would have to be {(grayScale ? (((data.Length - 1) * 8) + 3 / (double)sourceImage.Width * sourceImage.Height * 3 * 8) : ((data.Length - 1) * 8) + 3 / (double)sourceImage.Width * sourceImage.Height * 8)} times bigger");
-                if (((data.Length - 1) * 8) + 3 < sourceImage.Width * sourceImage.Height * 3 * 8) Console.WriteLine("The image would be big enough if not passed as grayscale image");
-                return false;
-            }
-            return true;
+            if (((data.Length - 1) * 8 + 3 <= sourceImage.Width * sourceImage.Height * 3 * 8 || grayScale) &&
+                ((data.Length - 1) * 8 + 3 <= sourceImage.Width * sourceImage.Height * 8 || !grayScale)) return true;
+            Console.WriteLine($"The image is not big enough to contain the encryption data. The image would have to be {(grayScale ? (data.Length - 1) * 8 + 3 / (double)sourceImage.Width * sourceImage.Height * 3 * 8 : (data.Length - 1) * 8 + 3 / (double)sourceImage.Width * sourceImage.Height * 8)} times bigger");
+            if ((data.Length - 1) * 8 + 3 < sourceImage.Width * sourceImage.Height * 3 * 8) Console.WriteLine("The image would be big enough if not passed as grayscale image");
+            return false;
         }
 
         private void MutateBits(Bitmap sourceImage, byte[] data, int pixelAmount, bool grayScale, bool fillRandom)
         {
-            int dataDensity = (int)Math.Ceiling(((double)data.Length * 8) / (grayScale ? pixelAmount : pixelAmount * 3));
+            int dataDensity = (int)Math.Ceiling((double)data.Length * 8 / (grayScale ? pixelAmount : pixelAmount * 3));
             Console.WriteLine($"{dataDensity} bits were used per channel to store the data");
             if (dataDensity > 4) Console.WriteLine("Warning: when using more than 4 bits per channel, the output image might suffer from major artifacting. Use a smaller data:image ratio to resolve this problem");
             data[0] = (byte)((dataDensity - 1) << 5); //only first 3 bits are read;
@@ -41,9 +39,9 @@ namespace SteganographyTool
             MutateDataDensityBits(data, sourceImage, ref dataCounter, grayScale);
             for (int y = 0; y < sourceImage.Size.Height; y++)
             {
-                for (int x = (y == 0) ? grayScale ? 4 : 1 : 0; x < sourceImage.Size.Width; x++)
+                for (int x = y == 0 ? grayScale ? 4 : 1 : 0; x < sourceImage.Size.Width; x++)
                 {
-                    RGB rgb = new RGB(sourceImage.GetPixel(x, y));
+                    Rgb rgb = new Rgb(sourceImage.GetPixel(x, y));
                     rgb.R = MutateChannel(data, rgb.R, ref dataCounter, dataDensity, !grayScale);
                     rgb.G = MutateChannel(data, rgb.G, ref dataCounter, dataDensity, !grayScale);
                     rgb.B = MutateChannel(data, rgb.B, ref dataCounter, dataDensity, true);
@@ -55,8 +53,7 @@ namespace SteganographyTool
                             FillRandom(sourceImage, dataDensity, grayScale, x + 1, y);
                             return;
                         }
-                        else
-                            return;
+                        return;
                     }
                 }
             }
@@ -68,14 +65,14 @@ namespace SteganographyTool
             byte[] data = new byte[3];
             for (int y = startY; y < sourceImage.Size.Height; y++)
             {
-                for (int x = (y == startY) ? startX : 0; x < sourceImage.Size.Width; x++)
+                for (int x = y == startY ? startX : 0; x < sourceImage.Size.Width; x++)
                 {
                     for (int i = 0; i < 3; i++)
                     {
                         data[i] = (byte)r.Next(255);
                     }
                     int dataCounter = 0;
-                    RGB rgb = new RGB(sourceImage.GetPixel(x, y));
+                    Rgb rgb = new Rgb(sourceImage.GetPixel(x, y));
                     rgb.R = MutateChannel(data, rgb.R, ref dataCounter, dataDensity, !grayScale);
                     rgb.G = MutateChannel(data, rgb.G, ref dataCounter, dataDensity, !grayScale);
                     rgb.B = MutateChannel(data, rgb.B, ref dataCounter, dataDensity, true);
@@ -90,7 +87,7 @@ namespace SteganographyTool
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    RGB rgb = new RGB(sourceImage.GetPixel(i, 0));
+                    Rgb rgb = new Rgb(sourceImage.GetPixel(i, 0));
                     rgb.R = MutateChannel(data, rgb.R, ref dataCounter, 1, false);
                     rgb.G = MutateChannel(data, rgb.G, ref dataCounter, 1, false);
                     rgb.B = MutateChannel(data, rgb.B, ref dataCounter, 1, true);
@@ -99,7 +96,7 @@ namespace SteganographyTool
             }
             else
             {
-                RGB rgb = new RGB(sourceImage.GetPixel(0, 0));
+                Rgb rgb = new Rgb(sourceImage.GetPixel(0, 0));
                 rgb.R = MutateChannel(data, rgb.R, ref dataCounter, 1, true);
                 rgb.G = MutateChannel(data, rgb.G, ref dataCounter, 1, true);
                 rgb.B = MutateChannel(data, rgb.B, ref dataCounter, 1, true);
@@ -136,7 +133,7 @@ namespace SteganographyTool
             return (b & (1 << 7 - bitIndex)) != 0;
         }
 
-        public void DecryptSteganograph(string sourceImage, string saveData, bool grayScale = false, EncodingType encoding = EncodingType.UTF8)
+        public void DecryptSteganograph(string sourceImage, string saveData, bool grayScale = false, EncodingType encoding = EncodingType.Utf8)
         {
             Bitmap source = FileStream.LoadImage(sourceImage);
             Console.WriteLine("Loaded source image");
@@ -166,7 +163,7 @@ namespace SteganographyTool
             int dataCounter = 0;
             for (int y = 0; y < sourceImage.Size.Height; y++)
             {
-                for (int x = (y == 0) ? grayScale ? 4 : 1 : 0; x < sourceImage.Size.Width; x++)
+                for (int x = y == 0 ? grayScale ? 4 : 1 : 0; x < sourceImage.Size.Width; x++)
                 {
                     Color color = sourceImage.GetPixel(x, y);
                     if (ReadChannel(color.R, data, dataDensity, ref dataCounter, !grayScale)) return data;
@@ -231,11 +228,9 @@ namespace SteganographyTool
                 bool allEqual = true;
                 for (int j = 0; j < toFind.Length; j++)
                 {
-                    if (toSearch[i + j] != toFind[j])
-                    {
-                        allEqual = false;
-                        break;
-                    }
+                    if (toSearch[i + j] == toFind[j]) continue;
+                    allEqual = false;
+                    break;
                 }
                 if (allEqual) return i;
             }
